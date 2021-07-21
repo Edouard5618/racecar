@@ -17,7 +17,7 @@ data = "RPOS"
 client.sendall(data.encode())
 # Receive and print the server's response
 response = client.recv(1024)
-response = struct.unpack("3f i", response)
+response = struct.unpack(">3f i", response)
 pos = response[:3]
 if response[3] == -1:
     print("Wrong code! Try again, loser")
@@ -30,7 +30,7 @@ data = "OBSF"
 client.sendall(data.encode())
 # Receive and print the server's response
 response = client.recv(1024)
-response = struct.unpack("4i", response)
+response = struct.unpack(">4i", response)
 obstacle = response[0]
 if response[3] == -1:
     print("Wrong code! Try again, loser")
@@ -43,7 +43,7 @@ data = "RBID"
 client.sendall(data.encode())
 # Receive and print the server's response
 response = client.recv(1024)
-response = struct.unpack("4i", response)
+response = struct.unpack(">4i", response)
 ID = response[0]
 if response[3] == -1:
     print("Wrong code! Try again, loser")
@@ -56,7 +56,7 @@ data = "WASAAAAAA"
 client.sendall(data.encode())
 # Receive and print the server's response
 response = client.recv(1024)
-response = struct.unpack("4i", response)
+response = struct.unpack(">4i", response)
 ID = response[0]
 if response[3] == -1:
     print("Wrong code! Try again, loser")
