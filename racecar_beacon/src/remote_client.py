@@ -19,7 +19,10 @@ client.sendall(data.encode())
 response = client.recv(1024)
 response = struct.unpack("3f i", response)
 pos = response[:3]
-print("Server response for RPOS: "+ str(pos))
+if response[3] == -1:
+    print("Wrong code! Try again, loser")
+else:
+    print("Server response for RPOS: "+ str(pos))
 
 
 # Send data to the server
@@ -29,7 +32,10 @@ client.sendall(data.encode())
 response = client.recv(1024)
 response = struct.unpack("4i", response)
 obstacle = response[0]
-print("Server response for OBSF: "+ str(obstacle))
+if response[3] == -1:
+    print("Wrong code! Try again, loser")
+else:
+    print("Server response for OBSF: "+ str(obstacle))
 
 
 # Send data to the server
@@ -39,7 +45,23 @@ client.sendall(data.encode())
 response = client.recv(1024)
 response = struct.unpack("4i", response)
 ID = response[0]
-print("Server response for RBID: "+ str(ID))
+if response[3] == -1:
+    print("Wrong code! Try again, loser")
+else:
+    print("Server response for RBID: "+ str(ID))
+
+
+# Send data to the server
+data = "WASAAAAAA"
+client.sendall(data.encode())
+# Receive and print the server's response
+response = client.recv(1024)
+response = struct.unpack("4i", response)
+ID = response[0]
+if response[3] == -1:
+    print("Wrong code! Try again, loser")
+else:
+    print("Server response for RBID: "+ str(ID))
 
 
 # Close the client socket
