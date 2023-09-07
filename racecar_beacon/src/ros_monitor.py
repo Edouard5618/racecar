@@ -13,7 +13,7 @@ from tf.transformations import euler_from_quaternion
 class ROSMonitor:
     def __init__(self):
         # Add your subscriber here (odom? laserscan?):
-        self.sub_odom = rospy.Subcriber("/odometry/filtered", Odometry, self.odom_callback)
+        self.sub_odom = rospy.Subscriber("/odometry/filtered", Odometry, self.odom_callback)
         self.sub_laser = rospy.Subscriber("/scan", LaserScan, self.laser_callback)
 
         # Current robot state:
