@@ -6,12 +6,14 @@ import threading
 
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
+from tf.transformations import euler_from_quaternion
+
 
 class ROSMonitor:
     def __init__(self):
         # Add your subscriber here (odom? laserscan?):
-        # self.sub_odom = rospy.Subcriber(...)
-        # self.sub_laser = rospy.Subscriber(...)
+        self.sub_odom = rospy.Subcriber("/odometry/filtered", Odometry, self.odom_callback)
+        self.sub_laser = rospy.Subscriber("/scan", LaserScan, self.laser_callback)
 
         # Current robot state:
         self.id = 0xFFFF
@@ -32,6 +34,33 @@ class ROSMonitor:
         # self.rr_socket = socket.Socket(...)
         while True:
             pass
+
+    def odom_callback(self, msg):
+        rospy.loginfo("odom_callback: ")
+        rospy.loginfo(msg)
+
+        # Transform the Odometry message into a tuple (x, y, yaw):
+        self.pos = (msg.pose.pose.position.x, msg.pose.pose.position.y, self.quaternion_to_yaw(msg.pose.pose.orientation))
+
+        # Send the position to the remote client:
+        # self.rr_socket.send(...)
+        
+        pass
+
+    def quaternion_to_yaw(quat):
+        # Uses TF transforms to convert a quaternion to a rotation angle around Z.
+        # Usage with an Odometry message: 
+        #   yaw = quaternion_to_yaw(msg.pose.pose.orientation)
+        (roll, pitch, yaw) = euler_from_quaternion([quat.x, quat.y, quat.z, quat.w])
+        return yaw
+
+    def laser_callback(self, msg):
+        rospy.loginfo("laser_callback: " + str((msg.ranges)))
+
+        if min(msg.ranges) < 1000: # 1m
+            self.obstacle = True
+        else:
+            self.obstacle = False
 
 if __name__=="__main__":
     rospy.init_node("ros_monitor")
