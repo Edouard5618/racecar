@@ -3,6 +3,7 @@
 import rospy
 import socket
 import threading
+import time
 
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
@@ -23,17 +24,38 @@ class ROSMonitor:
         # Params :
         self.remote_request_port = rospy.get_param("remote_request_port", 65432)
         self.pos_broadcast_port  = rospy.get_param("pos_broadcast_port", 65431)
+        self.broadcast_ip        = "255.255.255.255"
+        self.listen_ip           = "10.0.1.15"
 
         # Thread for RemoteRequest handling:
         self.rr_thread = threading.Thread(target=self.rr_loop)
+        self.pos_track_thread = threading.Thread(target=self.pos_track_loop)
 
         print("ROSMonitor started.")
 
     def rr_loop(self):
         # Init your socket here :
-        # self.rr_socket = socket.Socket(...)
-        while True:
-            pass
+        # broadcast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # IPv4, UDP
+        # while True:
+        #     broadcast_socket.sendto(self.pos.encode(), (self.broadcast_ip, self.pos_broadcast_port))
+        #     time.sleep(1)  # Diffusion toutes les 1 seconde
+        pass
+
+    def pos_track_loop(self):
+        # Init your socket here :
+        # request_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # request_socket.bind((self.listen_ip, self.remote_request_port))
+        # request_socket.listen(1)
+        # while True:
+        #     conn, addr = request_socket.accept()
+        #     with conn:
+        #         print('Connected by', addr)
+        #         while True:
+        #             data = conn.recv(1024)
+        #             if not data:
+        #                 break
+        #             conn.sendall((str(self.pos) + str(self.id)).encode())
+        pass
 
     def odom_callback(self, msg):
         rospy.loginfo("odom_callback: ")
