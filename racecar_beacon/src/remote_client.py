@@ -10,6 +10,7 @@ PORT = 65432
 
 # Create a socket and connect to the server
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # IPv4, TCP
+
 client.connect((HOST, PORT))
 
 # Send data to the server
