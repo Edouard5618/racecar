@@ -19,8 +19,8 @@ client.sendall(data.encode())
 response = client.recv(1024).decode()
 print("Server response:", response)
 
-except socket.error as erreur:
-    print("Erreur de connexion au serveur :", erreur)
+#except socket.error as e:
+#print("Erreur de connexion au serveur :", e)
 
 
 # Close the client socket
