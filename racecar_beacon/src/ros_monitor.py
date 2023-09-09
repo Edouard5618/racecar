@@ -65,8 +65,10 @@ class ROSMonitor:
                 else:
                     print("errors")
                     break
-        finally:
             conn.close()
+            
+        finally:
+            
             request_socket.close()
             print("Connection close")
         
@@ -74,14 +76,17 @@ class ROSMonitor:
     def pos_track_loop(self):
         # Init your socket here :
         request_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # IPv4, UDP
-    
+        request_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        count=0
         while rospy.is_shutdown() == False:
             request_socket.sendto((str(self.pos) + str(self.id)).encode(), (self.broadcast_ip, self.pos_broadcast_port))
+            print("Broadcasting"+str(count))
+            count=count+1
             time.sleep(1)
 
         request_socket.sendto(("EXIT").encode(), (self.broadcast_ip, self.pos_broadcast_port))
         request_socket.close()
-        print("Connection close")
+        print("Broadcast Connection close")
 
 
 
