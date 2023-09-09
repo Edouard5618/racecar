@@ -12,8 +12,12 @@ client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # IPv4, UDP
 client.connect((HOST, PORT))
 
 # Receive and print the server's response
-response = client.recv(1024).decode()
-print("Server response:"+ str(response))
+while True:
+    response = client.recv(1024).decode()
+    print("Server response:"+ str(response))
+    if response == "EXIT":
+        break
+
 
 
 # Close the client socket
