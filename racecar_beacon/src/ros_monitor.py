@@ -30,8 +30,8 @@ class ROSMonitor:
         # Params :
         self.remote_request_port = rospy.get_param("remote_request_port", 65432)
         self.pos_broadcast_port  = rospy.get_param("pos_broadcast_port", 65431)
-        self.broadcast_ip        = "255.255.255.255"
         self.listen_ip           = "192.168.137.215"
+        self.broadcast_ip = '255.255.255.255'
         
         print(self.remote_request_port)
            
@@ -40,29 +40,24 @@ class ROSMonitor:
         self.pos_track_thread = threading.Thread(target=self.pos_track_loop)
 
         self.rr_thread.start()
+        self.pos_track_thread.start()
         print("ROSMonitor started.")
 
     def remote_request_loop(self):
         # Init your socket here :
-        print("IN LOOP")
         request_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # IPv4, TCP
-        print("after creation")
         request_socket.bind((self.listen_ip, self.remote_request_port))
-        print("after bind")
         request_socket.listen(1)
-        print("after listen")
         try:
             conn, addr = request_socket.accept()
             print('Remote Request connected by', addr)
-            while True:
+            while rospy.is_shutdown() == False:
                 data = conn.recv(1024).decode()
                 if not data:
                     break
                 print("Received data: " + data)
                 if data == "RPOS":
-                    print("in RPOS")
                     conn.sendall((str(self.pos) + str(self.id)).encode())
-                    print("send done")
                 elif data == "OBSF":
                     conn.sendall(str(self.obstacle).encode())
                 elif data == "RBID":
@@ -76,24 +71,19 @@ class ROSMonitor:
             print("Connection close")
         
 
-                
-            
-                        
-                    
-
     def pos_track_loop(self):
         # Init your socket here :
-        # request_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # IPv4, UDP
-        # request_socket.bind((self.broadcast_ip, self.pos_broadcast_port))
-        # request_socket.listen(1)
-        # while True:
-        #     conn, addr = request_socket.accept()
-        #     with conn:
-        #         print('Pos track connected by', addr)
-        #         while True:   
-        #             conn.sendall((str(self.pos) + str(self.id)).encode())
-        #             time.sleep(1)  # Diffusion toutes les 1 seconde
-        pass
+        request_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # IPv4, UDP
+    
+        while rospy.is_shutdown() == False:
+            request_socket.sendto((str(self.pos) + str(self.id)).encode(), (self.broadcast_ip, self.pos_broadcast_port))
+            time.sleep(1)
+
+        request_socket.sendto(("EXIT").encode(), (self.broadcast_ip, self.pos_broadcast_port))
+        request_socket.close()
+        print("Connection close")
+
+
 
 
     def odom_callback(self, msg):
