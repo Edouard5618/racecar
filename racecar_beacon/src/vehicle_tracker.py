@@ -2,19 +2,21 @@
 
 import socket
 
-HOST = '192.168.137.215'
+HOST = ''
 # This process should listen to a different port than the PositionBroadcast client.
 PORT = 65431
 
 # Create a socket and connect to the server
 client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # IPv4, UDP
+client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
-client.connect((HOST, PORT))
+client.bind((HOST, PORT))
 
 # Receive and print the server's response
 while True:
-    response = client.recv(1024).decode()
-    print("Server response:"+ str(response))
+    print("Wait for message")
+    response, source_address = client.recvfrom(1024)
+    print("Server response:"+ str(response.decode()))
     if response == "EXIT":
         break
 
