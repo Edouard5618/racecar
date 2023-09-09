@@ -6,10 +6,11 @@ import socket
 HOST = '192.168.137.215'
 # This process should listen to a different port than the PositionBroadcast client.
 PORT = 65432
+Adress = (HOST, PORT)
 
 # Create a socket and connect to the server
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # IPv4, TCP
-client.connect(HOST, PORT)
+client.connect(Adress)
 
 # Send data to the server
 data = "RPOS"
