@@ -4,7 +4,7 @@ import socket
 import time
 import struct
 
-HOST = '192.168.10.1'
+HOST = '10.0.2.1'
 # This process should listen to a different port than the PositionBroadcast client.
 PORT = 65432
 
