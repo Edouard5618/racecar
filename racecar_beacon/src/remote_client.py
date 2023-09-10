@@ -4,7 +4,7 @@ import socket
 import time
 
 #HOST = '127.0.0.1'
-HOST = '192.168.137.215'
+HOST = '192.168.10.1'
 # This process should listen to a different port than the PositionBroadcast client.
 PORT = 65432
 
