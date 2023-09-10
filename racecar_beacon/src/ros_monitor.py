@@ -35,8 +35,8 @@ class ROSMonitor:
         # Params :
         self.remote_request_port = rospy.get_param("remote_request_port", 65432)
         self.pos_broadcast_port  = rospy.get_param("pos_broadcast_port", 65431)
-        self.listen_ip           = "192.168.10.1"
-        self.broadcast_ip = '192.168.10.255'
+        self.listen_ip           = "10.0.2.1"
+        self.broadcast_ip = '10.0.2.255'
         
         print(self.remote_request_port)
         # Thread for RemoteRequest handling:
@@ -52,6 +52,7 @@ class ROSMonitor:
         request_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # IPv4, TCP
         request_socket.bind((self.listen_ip, self.remote_request_port))
         request_socket.listen(1)
+        request_socket.settimeout(3600)
         try:
             
             while rospy.is_shutdown() == False:
