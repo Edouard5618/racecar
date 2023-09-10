@@ -27,6 +27,10 @@ class ROSMonitor:
         self.pos = (0,0,0)
         self.obstacle = False
 
+        #mutex
+        self.mutexPos = threading.Lock()
+        self.mutexObstacle = threading.Lock()
+
         # Params :
         self.remote_request_port = rospy.get_param("remote_request_port", 65432)
         self.pos_broadcast_port  = rospy.get_param("pos_broadcast_port", 65431)
@@ -34,7 +38,6 @@ class ROSMonitor:
         self.broadcast_ip = '255.255.255.255'
         
         print(self.remote_request_port)
-           
         # Thread for RemoteRequest handling:
         self.rr_thread = threading.Thread(target=self.remote_request_loop)
         self.pos_track_thread = threading.Thread(target=self.pos_track_loop)
@@ -57,9 +60,13 @@ class ROSMonitor:
                     break
                 print("Received data: " + data)
                 if data == "RPOS":
+                    self.mutexPos.acquire()
                     conn.sendall((str(self.pos) + str(self.id)).encode())
+                    self.mutexPos.release()
                 elif data == "OBSF":
+                    self.mutexObstacle.acquire()
                     conn.sendall(str(self.obstacle).encode())
+                    self.mutexObstacle.release()
                 elif data == "RBID":
                     conn.sendall(str(self.id).encode())
                 else:
@@ -79,7 +86,9 @@ class ROSMonitor:
         request_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         count=0
         while rospy.is_shutdown() == False:
+            self.mutexPos.acquire()
             request_socket.sendto((str(self.pos) + str(self.id)).encode(), (self.broadcast_ip, self.pos_broadcast_port))
+            self.mutexPos.release()
             print("Broadcasting"+str(count))
             count=count+1
             time.sleep(1)
@@ -109,9 +118,13 @@ class ROSMonitor:
         # rospy.loginfo("laser_callback: " + str((msg.ranges)))
 
         if min(msg.ranges) < 1000: # 1m
+            self.mutexObstacle.acquire()
             self.obstacle = True
+            self.mutexObstacle.release()
         else:
+            self.mutexObstacle.acquire()
             self.obstacle = False
+            self.mutexObstacle.release()
 
 if __name__=="__main__":
     rospy.init_node("ros_monitor")
