@@ -20,8 +20,8 @@ def quaternion_to_yaw(quat):
 class ROSMonitor:
     def __init__(self):
         # Add your subscriber here (odom? laserscan?):
-        self.sub_odom = rospy.Subscriber("/odometry/filtered", Odometry, self.odom_callback)
-        self.sub_laser = rospy.Subscriber("/scan", LaserScan, self.laser_callback)
+        self.sub_odom = rospy.Subscriber("/racecar/odometry/filtered", Odometry, self.odom_callback)
+        self.sub_laser = rospy.Subscriber("/racecar/scan", LaserScan, self.laser_callback)
 
         # Current robot state:
         self.id = 0x0005
@@ -35,8 +35,8 @@ class ROSMonitor:
         # Params :
         self.remote_request_port = rospy.get_param("remote_request_port", 65432)
         self.pos_broadcast_port  = rospy.get_param("pos_broadcast_port", 65431)
-        self.listen_ip           = "192.168.10.1"
-        self.broadcast_ip = '192.168.10.255'
+        self.listen_ip           = "10.0.2.1"
+        self.broadcast_ip = '10.0.2.255'
         
         print(self.remote_request_port)
         # Thread for RemoteRequest handling:
@@ -52,6 +52,7 @@ class ROSMonitor:
         request_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # IPv4, TCP
         request_socket.bind((self.listen_ip, self.remote_request_port))
         request_socket.listen(1)
+        request_socket.settimeout(3600)
         try:
             
             while rospy.is_shutdown() == False:
@@ -76,7 +77,9 @@ class ROSMonitor:
                         packed_data= struct.pack("4i",self.id,0,0,0)
                         conn.sendall(packed_data)
                     else:
-                        print("errors")
+                        packed_data=struct.pack("4i",-1,-1,-1,-1)
+                        conn.sendall(packed_data)
+                        print("Looks like there are skills issues! Get good! GG EZ!")
                         break
                 conn.close()
                 print("Connection close")
@@ -125,8 +128,8 @@ class ROSMonitor:
 
     def laser_callback(self, msg):
         # rospy.loginfo("laser_callback: " + str((msg.ranges)))
-
-        if min(msg.ranges) < 1000: # 1m
+        # print(min(msg.ranges))
+        if min(msg.ranges) < 1: # 1m
             self.mutexObstacle.acquire()
             self.obstacle = 1
             self.mutexObstacle.release()
