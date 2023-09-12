@@ -20,8 +20,8 @@ def quaternion_to_yaw(quat):
 class ROSMonitor:
     def __init__(self):
         # Add your subscriber here (odom? laserscan?):
-        self.sub_odom = rospy.Subscriber("/odometry/filtered", Odometry, self.odom_callback)
-        self.sub_laser = rospy.Subscriber("/scan", LaserScan, self.laser_callback)
+        self.sub_odom = rospy.Subscriber("/racecar/odometry", Odometry, self.odom_callback)
+        self.sub_laser = rospy.Subscriber("/racecar/scan", LaserScan, self.laser_callback)
 
         # Current robot state:
         self.id = 0x0005
@@ -77,7 +77,9 @@ class ROSMonitor:
                         packed_data= struct.pack("4i",self.id,0,0,0)
                         conn.sendall(packed_data)
                     else:
-                        print("errors")
+                        packed_data=struct.pack("4i",-1,-1,-1,-1)
+                        conn.sendall(packed_data)
+                        print("Looks like there are skills issues! Get good! GG EZ!")
                         break
                 conn.close()
                 print("Connection close")
@@ -115,7 +117,9 @@ class ROSMonitor:
         # Transform the Odometry message into a tuple (x, y, yaw):
         #rospy.loginfo("PARAMETRE_ORIENTATION: " + str(msg.pose.pose.orientation))
         #rospy.loginfo("PARAMETRE x: "+str(msg.pose.pose.position.x))
+        print("In odom callback")
         self.mutexPos.acquire()
+        print("In odom callback mutex")
         self.pos = (msg.pose.pose.position.x, msg.pose.pose.position.y, quaternion_to_yaw(msg.pose.pose.orientation))
         self.mutexPos.release()
 
