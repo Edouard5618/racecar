@@ -65,19 +65,19 @@ class ROSMonitor:
                     print("Received data: " + data)
                     if data == "RPOS":
                         self.mutexPos.acquire()
-                        packed_data= struct.pack("3f i",self.pos[0],self.pos[1],self.pos[2],0)
+                        packed_data= struct.pack(">3f i",self.pos[0],self.pos[1],self.pos[2],0)
                         conn.sendall(packed_data)
                         self.mutexPos.release()
                     elif data == "OBSF":
                         self.mutexObstacle.acquire()
-                        packed_data= struct.pack("4i",self.obstacle,0,0,0)
+                        packed_data= struct.pack(">4i",self.obstacle,0,0,0)
                         conn.sendall(packed_data)
                         self.mutexObstacle.release()
                     elif data == "RBID":
-                        packed_data= struct.pack("4i",self.id,0,0,0)
+                        packed_data= struct.pack(">4i",self.id,0,0,0)
                         conn.sendall(packed_data)
                     else:
-                        packed_data=struct.pack("4i",-1,-1,-1,-1)
+                        packed_data=struct.pack(">4i",-1,-1,-1,-1)
                         conn.sendall(packed_data)
                         print("Looks like there are skills issues! Get good! GG EZ!")
                         break
@@ -96,7 +96,7 @@ class ROSMonitor:
         count=0
         while rospy.is_shutdown() == False:
             self.mutexPos.acquire()
-            packed_data= struct.pack("3f i",self.pos[0],self.pos[1],self.pos[2],self.id)
+            packed_data= struct.pack(">3f i",self.pos[0],self.pos[1],self.pos[2],self.id)
             request_socket.sendto(packed_data,(self.broadcast_ip, self.pos_broadcast_port))
             self.mutexPos.release()
             print("Broadcasting"+str(count))
