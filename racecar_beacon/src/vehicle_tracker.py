@@ -16,7 +16,7 @@ print("Wait for message")
 # Receive and print the server's response
 while True:
     response, source_address = client.recvfrom(1024)
-    response = struct.unpack("3f i", response)
+    response = struct.unpack(">3f i", response)
     pos = response[:3]
     ID = response[3]
     print("Server response pos: "+ str(pos) + " and ID: "+ str(ID))
