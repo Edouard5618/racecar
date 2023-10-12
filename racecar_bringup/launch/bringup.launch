@@ -44,7 +44,7 @@
 
           <param name="camera_info_url" value="package://racecar_bringup/camera_info/front_camera.yaml"/>
           <param name="camera_frame_id" value="$(arg prefix)/camera_optical_link"/>
-          <param name="enable_raw" value="false"/>
+          <param name="enable_raw" value="true"/>
           <param name="enable_imv" value="false"/>
           <param name="camera_id" value="0"/>
           <param name="camera_name" value="front_camera"/>

@@ -1,4 +1,4 @@
-//=========================HEADER=============================================================
+S//=========================HEADER=============================================================
 // Firmware for the Arduino managing the propulsion of the slash platform (UdeS Racecar)
 //============================================================================================
 
@@ -15,9 +15,50 @@
 #include <geometry_msgs/Twist.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/MagneticField.h>
+#include <string.h>
 
 // For version including 
 #include "MPU9250.h" 
+
+#define AVG_SIZE 40
+
+///////////////////////////////////////////////////////////////////
+// Custom Class Declaration
+///////////////////////////////////////////////////////////////////
+class MovingAverage
+{
+private:
+    uint8_t cursor = 0;
+    float table[AVG_SIZE] = {0};
+    float total = 0.0;
+
+public:
+    MovingAverage()
+    {
+        //Populating with zeros
+        for (uint8_t i = 0; i < AVG_SIZE; i++)
+        {
+            table[i] = 0.0f;
+        }
+    }
+
+    // Replace last value in avg and return current average 
+    float addValue(float value)
+    {
+        total -= table[cursor];
+        table[cursor++] = value;
+        total += value;
+        cursor = (cursor == AVG_SIZE ? 0: cursor);
+
+        return (total/AVG_SIZE);
+    }
+
+    // Return current average
+    float getAvg()
+    {
+        return (total/AVG_SIZE);
+    }
+};
 
 ///////////////////////////////////////////////////////////////////
 // Init I/O
@@ -52,21 +93,33 @@ const int ser_pin = 9;      // Servo
 const int dri_pwm_pin     = 6 ;  // H bridge drive pwm
 const int dri_dir_pin     = 42; //
 
+long somme = 0;
+int count = 0;
+#define TIME_AVG 1000000
+unsigned long prev_millis = 0;
+
 ///////////////////////////////////////////////////////////////////
 // Parameters
 ///////////////////////////////////////////////////////////////////
 
+//Filtre
+MovingAverage avg;
+
 // Controller
+
+float last_vel_error = 0;
+float last_pos_error = 0;
+
 
 //TODO: VOUS DEVEZ DETERMINEZ DES BONS PARAMETRES SUIVANTS
 const float filter_rc  =  0.1;
-const float vel_kp     =  10.0; 
-const float vel_ki     =  0.0; 
+const float vel_kp     =  9.0; 
+const float vel_ki     =  24.0; 
 const float vel_kd     =  0.0;
-const float pos_kp     =  1.0; 
-const float pos_kd     =  0.0;
-const float pos_ki     =  0.0; 
-const float pos_ei_sat =  10000.0; 
+const float pos_kp     =  7.0;
+const float pos_kd     =  1.3;
+const float pos_ki     =  0.0;
+const float pos_ei_sat =  100.0; 
 
 // Loop period 
 const unsigned long time_period_low   = 2;    // 500 Hz for internal PID loop
@@ -77,18 +130,18 @@ const unsigned long time_period_com   = 1000; // 1000 ms = max com delay (watchd
 const int pwm_min_ser = 30  ;
 const int pwm_zer_ser = 90  ;
 const int pwm_max_ser = 150 ;
-const int pwm_min_dri = -511;
+const int pwm_min_dri = -511; //511
 const int pwm_zer_dri = 0;
-const int pwm_max_dri = 511;
+const int pwm_max_dri = 511; //511
 
-const int dri_wakeup_time = 20; // micro second
+const int dri_wakeup_time = 10; // micro second
 
 // Units Conversion
-const double batteryV  = 8;
+const double batteryV  = 9.1;
 const double maxAngle  = 40*(2*3.1416)/360;    //max steering angle in rad
 const double rad2pwm   = (pwm_zer_ser-pwm_min_ser)/maxAngle;
 const double volt2pwm  = (pwm_zer_dri-pwm_min_dri)/batteryV;
-const double tick2m    = 0.000002752; // To confirm
+const double tick2m    = 0.000002643*2795/2819;//0.000005013/3.5;//0.0000022016; //0.000002752; // To confirm
 
 ///////////////////////////////////////////////////////////////////
 // Memory
@@ -97,11 +150,11 @@ const double tick2m    = 0.000002752; // To confirm
 // Inputs
 float ser_ref    = 0; //rad
 float dri_ref    = 0; //volt
-int ctl_mode     = 0; // discrete control mode
+float ctl_mode     = 0.0f; // discrete control mode
 int dri_standby  = 0; 
 
 // Ouputs
-int ser_pwm   = 0;
+int   ser_pwm   = 0;
 int   dri_pwm = 0;
 float dri_cmd = 0;
 
@@ -112,6 +165,15 @@ signed long enc_old   = 0;
 float pos_now   = 0;
 float vel_now   = 0;
 float vel_old   = 0;
+unsigned long vel_time_new = 0;
+unsigned long vel_time_old = 0;
+float vel_time = 0;
+unsigned long pos_time_new = 0;
+unsigned long pos_time_old = 0;
+float pos_time = 0;
+
+float vel_error_deriv = 0;
+float pos_error_deriv = 0;
 
 float vel_error_int = 0 ;
 float pos_error_int = 0;
@@ -277,6 +339,8 @@ void set_pwm( int pwm ){
     TCCR4B = _BV(CS20) | _BV(WGM42);
   
     OCR4A = abs( pwm ) - 1; //set the duty cycle of pin 6
+    somme += abs(pwm);
+    count++;
   }
   
 }
@@ -318,16 +382,24 @@ void ctl(){
   pos_now = (float) enc_now * tick2m;
   
   // Velocity computation
+  vel_time_new = millis();
+  vel_time = vel_time_new-vel_time_old;
+  //float vel_raw = (enc_now - enc_old) * tick2m / time_period_low * 1000;
+  float vel_raw = (enc_now - enc_old) * tick2m / (vel_time/1000.0);
+  avg.addValue(vel_raw);
+  float vel_fil = avg.getAvg();
+  vel_time_old = vel_time_new;
 
-  //TODO: VOUS DEVEZ COMPLETEZ LA DERIVEE FILTRE ICI
-  float vel_raw = (enc_now - enc_old) * tick2m / time_period_low * 1000;
-  float alpha   = 0; // TODO
-  float vel_fil = vel_raw;    // Filter TODO
+
   
   // Propulsion Controllers
   
   //////////////////////////////////////////////////////
-  if (ctl_mode == 0 ){
+  //char buff[3] = {'\0'};
+  //itoa (ctl_mode, buff, 10);
+  //nodeHandle.logwarn(buff);  
+  
+  if (ctl_mode == 0.0f ){
     // Zero output
     dri_pwm    = pwm_zer_dri ;
     
@@ -337,7 +409,7 @@ void ctl(){
     
   }
   //////////////////////////////////////////////////////
-  else if (ctl_mode == 1 ){
+  else if (ctl_mode == 1.0f ){
     // Fully Open-Loop
     // Commands received in [Volts] directly
     dri_cmd    = dri_ref;
@@ -348,45 +420,92 @@ void ctl(){
     pos_error_int = 0 ;
   }
   //////////////////////////////////////////////////////
-  else if (ctl_mode == 2 ){
-    // Low-level Velocity control
-    // Commands received in [m/sec] setpoints
+  else if (ctl_mode == 2.0f ){
     
-    float vel_ref, vel_error;
+        // Low-level Velocity control
+        // Commands received in [m/sec] setpoints
+        float vel_ref;
+        float vel_error;
 
-    //TODO: VOUS DEVEZ COMPLETEZ LE CONTROLLEUR SUIVANT
-    vel_ref       = dri_ref; 
-    vel_error     = vel_ref - vel_fil;
-    vel_error_int = 0; // TODO
-    dri_cmd       = vel_kp * vel_error; // proportionnal only
-    
-    dri_pwm    = cmd2pwm( dri_cmd ) ;
+        // TODO: VOUS DEVEZ COMPLETEZ LE CONTROLLEUR SUIVANT
+
+        vel_ref = dri_ref;                              //consigne
+        vel_error = vel_ref - vel_fil;                  //erreur instantannée
+        vel_error_int += vel_error;                     //erreur accumulée
+        vel_error_deriv = last_vel_error - vel_error;   //erreur diff
+
+        float vel_proportional = vel_kp*vel_error;                              //partie proportionnelle
+        float vel_integrator   = vel_ki*(time_period_low/1000.0)*vel_error_int;   //partie intégrale
+        float vel_derivative   = vel_kd/(time_period_low/1000.0)*vel_error_deriv; //partie dérivée
+
+        dri_cmd = vel_proportional + vel_integrator + vel_derivative;
+        dri_pwm = cmd2pwm(dri_cmd);
+
+        //int temp = round(vel_error*1000);
+        //char buff[10] = {'\0'};
+        //itoa (temp, buff, 10);
+        //nodeHandle.logwarn("error:")
+        //nodeHandle.logwarn(buff);
+//        int temp = round(vel_raw*1000);
+  //      char buff[10] = {'\0'};
+    //    itoa (temp, buff, 10);
+      //  nodeHandle.logwarn(buff);
+
+        last_vel_error = vel_error;
 
   }
   ///////////////////////////////////////////////////////
-  else if (ctl_mode == 3){
+  else if (ctl_mode == 3.0f){
+      
     // Low-level Position control
-    // Commands received in [m] setpoints
     
-    float pos_ref, pos_error, pos_error_ddt;
+        // Commands received in [m] setpoints
+        //nodeHandle.logfatal("pos");
+        float pos_ref;
+        //String pos_ref_string
+        //pos_ref_string = to_string(pos_ref);
+        
+        float pos_error;
 
-    //TODO: VOUS DEVEZ COMPLETEZ LE CONTROLLEUR SUIVANT
-    pos_ref       = dri_ref; 
-    pos_error     = 0; // TODO
-    pos_error_ddt = 0; // TODO
-    pos_error_int = 0; // TODO
-    
-    // Anti wind-up
-    if ( pos_error_int > pos_ei_sat ){
-      pos_error_int = pos_ei_sat;
-    }
-    
-    dri_cmd = 0; // TODO
-    
-    dri_pwm = cmd2pwm( dri_cmd ) ;
+        // TODO: VOUS DEVEZ COMPLETEZ LE CONTROLLEUR SUIVANT
+        pos_ref = dri_ref;
+        
+        pos_error = pos_ref - pos_now;                //erreur instantannée
+        pos_error_int += pos_error;                     //erreur accumulée
+        pos_error_deriv = last_pos_error - pos_error;   //erreur diff
+
+        // Anti wind-up
+        if (pos_error_int > pos_ei_sat)
+        {
+            pos_error_int = pos_ei_sat;
+        }
+
+        float pos_proportional = pos_kp*pos_error;                              //partie proportionnelle
+        pos_time_new = millis();
+        pos_time = pos_time_new - pos_time_old;
+        pos_time_old = pos_time_new;
+        float pos_integrator   = pos_ki*(pos_time/1000.0)*pos_error_int;   //partie intégrale
+        float pos_derivative   = pos_kd/(pos_time/1000.0)*pos_error_deriv; //partie dérivée
+
+        dri_cmd = pos_proportional + pos_integrator + pos_derivative;
+
+        int temp = round(pos_error*1000);
+        char buff[10] = {'\0'};
+        itoa (temp, buff, 10);
+        nodeHandle.logwarn(buff);
+        
+       // if (dri_cmd > 6)
+        ///  {
+         //   dri_cmd = 6;
+         // }
+
+        
+        dri_pwm = cmd2pwm(dri_cmd);
+
+        last_pos_error = pos_error;
   }
   ///////////////////////////////////////////////////////
-  else if (ctl_mode == 4){
+  else if (ctl_mode == 4.0f){
     // Reset encoder counts
     
     clearEncoderCount();
@@ -408,6 +527,7 @@ void ctl(){
   ///////////////////////////////////////////////////////
   
   // H-bridge pwm update
+  
   set_pwm(dri_pwm);
   
   //Update memory variable
@@ -476,7 +596,7 @@ void loop(){
     
     // All-stop
     dri_ref  = 0;  // velocity set-point
-    ctl_mode = 2;  // closed-loop velocity mode
+    ctl_mode = 0;  // closed-loop velocity mode etait 2
     
   }
 

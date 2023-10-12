@@ -58,7 +58,7 @@ class teleop(object):
             #If right trigger is active       
             elif (joy_msg.buttons[7]):   
                 # Closed-loop position, Open-loop steering
-                self.cmd_msg.linear.x  = propulsion_user_input # [m]
+                self.cmd_msg.linear.x  = 1.5 # [m]
                 self.cmd_msg.angular.z = steering_user_input * self.cmd2rad
                 self.cmd_msg.linear.z  = 2   #CtrlChoice
                 
@@ -113,7 +113,7 @@ class teleop(object):
             # No active button
             else:
                 # Closed-loop velocity, Open-loop steering
-                self.cmd_msg.linear.x  = propulsion_user_input * self.max_vel #[m/s]
+                self.cmd_msg.linear.x  = 2.3 #[m/s]
                 self.cmd_msg.angular.z = steering_user_input * self.cmd2rad
                 self.cmd_msg.linear.z  = 0  # Control mode
         

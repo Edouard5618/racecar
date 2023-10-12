@@ -23,29 +23,78 @@ Client-side:
     <link rel="stylesheet" href="css/dashboard.css">
 
     <title>Laboratoire S5-GIF250</title>
+    <style>
+        button {
+        width: 120px;
+        }
+    </style>
 </head>
 
 <body>
     
   <!-- Menu BEGIN-->
-  <div class="collapse" id="navbarToggleExternalContent">
-    <div class="bg-dark p-4">
-      <h6 class="text-white h4">Config</h6>
-    </div>
-  </div>
-
   <nav class="navbar navbar-dark bg-dark">
-    <div>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleExternalContent">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+    <div class="row">
+        <div class="col-md-6">
+            <h3 style="color: white; padding-left: 20px;">Racecar</h3>
+        </div>
+        <div class="col-md-6">
+                <button type="button" class="btn btn-light float-right" onclick="ReturnHome()">Deconnexion!</button>
+        </div>
     </div>
-  </nav>
+   </nav>
   <!-- Menu END-->
 
   <!-- Main layout BEGIN-->
   <div class="container-fluid">
-
+    <div class="row">
+        <div>
+            <div>
+                <div class="row">
+                    <h4 style="padding-left:15px">Statut</h4> 
+                    <div id="colorStatut"class="box red" style="margin-top:4px;margin-left:5px"></div>
+                </div>
+                <table>
+                    <tr>
+                        <td><textarea id="output" rows="3" cols="35"></textarea></td>
+                        <td><button type="button" class="btn btn-dark" onclick="EffacezCb()">Effacer</button></td>
+                    </tr>
+                </table>
+                        
+                        
+            
+                <h4>Contrôle</h4>
+                
+                <table border="0">
+                    <tr>
+                        <td></td>
+                        <td><button type="button" id="btnAvancez" class="btn btn-dark" onclick="AvancezCb()" disabled>Avancer</button></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td><button type="button" id="btnGauche" class="btn btn-dark" onclick="GaucheCb()" disabled>Gauche</button></td>
+                        <td><button type="button" id="btnArretez" class="btn btn-danger" onclick="ArretezCb()" disabled> Arreter </button></td>
+                        <td><button type="button" id="btnDroite" class="btn btn-dark" onclick="DroiteCb()" disabled> Droite </button></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td><button type="button" id="btnArriere" class="btn btn-dark" onclick="ArriereCb()" disabled> Reculer </button></td>
+                        <td></td>
+                    </tr>
+                
+                </table>
+                <h4>Informations de connexion</h4>
+                <p>Nom d'usager</p>
+                <textarea id="Username" rows="1" cols="25"></textarea><br>
+                <p>Adresse IP</p>
+                <textarea id="IP_Display" rows="1" cols="25"></textarea><br>
+            </div>
+        </div>
+        <div >
+            <h4>Caméra</h4>
+            <img id="vid" src="http://:8080/stream?topic=/racecar/raspicam_node/image&type=ros_compressed" class="img-thumbnail" alt="Le flux video de la camera est non disponible" width="480" height="auto">
+        </div>
+     </div>
   </div>
   <!-- Main layout END-->
   
@@ -61,23 +110,90 @@ Client-side:
       // Define some global variables
       var rbServer = null;
       var cmdVelTopic = null;
+      var urlParams = new URLSearchParams(window.location.search);
+      var username = urlParams.get("username");
+      var ip = urlParams.get("ip");
+
+      // Display the received data on the page
+      var usertext = document.getElementById("Username");
+      usertext.value = username
+      var iptext = document.getElementById("IP_Display");
+      iptext.value = ip
+      
+      connectROS();
+      document.getElementById("vid").src= "http://"+ip+":8080/stream?topic=/racecar/raspicam_node/image&type=ros_compressed";
+      
 
       //Some initializations after the page has been shown
       $(document).ready(function(){
         document.getElementById("log").value = 'Default text\n'
       });
-
+      
+      function AvancezCb(){
+      var textarea = document.getElementById("output");
+      textarea.value += "Avancez\n"
+      twist.linear.x = 1
+      twist.angular.z = 0
+      textarea.scrollTop= textarea.scrollHeight;
+      }
+      
+      function ArretezCb(){
+      var textarea = document.getElementById("output");
+      textarea.value += "Arrêtez\n"
+      twist.linear.x = 0
+      twist.angular.z = 0
+      textarea.scrollTop= textarea.scrollHeight;
+      }
+      
+      function GaucheCb(){
+      var textarea = document.getElementById("output");
+      textarea.value += "Tourner à gauche\n"
+      twist.linear.x = 1
+      twist.angular.z = 1
+      textarea.scrollTop= textarea.scrollHeight;
+      }
+      
+      function DroiteCb(){
+      var textarea = document.getElementById("output");
+      textarea.value += "Tourner à droite\n"
+      twist.linear.x = 1
+      twist.angular.z = -1
+      textarea.scrollTop= textarea.scrollHeight;
+      }
+      
+      function ArriereCb(){
+      var textarea = document.getElementById("output");
+      textarea.value += "Reculer\n"
+      twist.linear.x = -1
+      twist.angular.z = 0
+      textarea.scrollTop= textarea.scrollHeight;
+      }
+      
+      function EffacezCb(){
+      var textarea = document.getElementById("output");
+      textarea.value = ""
+      }
+      
       // Define some functions
       function connectROS() {
         // This function connects to the rosbridge server
 
 	    rbServer = new ROSLIB.Ros({
           // Assuming ros server IP is 10.42.0.1
-	      url : 'ws://10.42.0.1:9090'
+	      url : 'ws://'+ip+':9090'
 	    });
 
         rbServer.on('connection', function(){
             console.log('Connected to websocket server.');
+            var textarea = document.getElementById("output");
+            textarea.value += "Connexion réussie\n"
+            document.getElementById("colorStatut").style.backgroundColor= "green"
+            
+            document.getElementById("btnAvancez").disabled=false;
+            document.getElementById("btnArretez").disabled=false;
+            document.getElementById("btnDroite").disabled=false;
+            document.getElementById("btnGauche").disabled=false;
+            document.getElementById("btnArriere").disabled=false;
 
             // These lines create a topic object as defined by roslibjs
             cmdVelTopic = new ROSLIB.Topic({
@@ -89,10 +205,22 @@ Client-side:
 
         rbServer.on('error', function(error) {
           console.log('Error connecting to websocket server: ', error);
+          var textarea = document.getElementById("output");
+          textarea.value += "Error connecting to racecar\n"
+          document.getElementById("colorStatut").style.backgroundColor= "red"
+          
+            document.getElementById("btnAvancez").disabled=true;
+            document.getElementById("btnArretez").disabled=true;
+            document.getElementById("btnDroite").disabled=true;
+            document.getElementById("btnGauche").disabled=true;
+            document.getElementById("btnArriere").disabled=true;
 	    });
 
 	    rbServer.on('close', function() {
           console.log('Connection to websocket server closed.');
+          var textarea = document.getElementById("output");
+          textarea.value += "Connexion close\n"
+          
 	    });
       }
 
@@ -118,7 +246,17 @@ Client-side:
              cmdVelTopic.publish(twist);
            }
       }, 200);
+      
+      function ReturnHome() {
+            
+            // Construct the URL with the data as a query parameter
+            var targetURL = "index1.html";
+            
+            // Navigate to the target page with the data
+            window.location.href = targetURL;
+       }
 
   </script>
 </body>
 </html>
+
