@@ -47,23 +47,14 @@ Client-side:
   <!-- Menu END-->
 
   <!-- Main layout BEGIN-->
-  <div class="container-fluid">
-  		<div class="col-sm-4">
-  		</div>
-  		<div class="col-sm-4">
-		  	<div class="row">
+  <div class="container-fluid align-items-center justify-content-center">
+  		<div class=" d-flex align-items-center justify-content-center">
+		  	
 		  		<input class="form-control" type="text" id="Username" placeholder="Nom utilisateur">
-		  	</div>
-		  	<br>
-		  	<div class="row">
 		  		<input class="form-control" type="text" id="IP" placeholder="Adresse IP">
-		  	</div>
+		  	<button type="button" onclick="sendData()" class="btn btn-dark" style="margin:10px"> connecter </button>
+		  	
 	  	</div>
-	  	<div class="col-sm-4">
-	  	</div>
-	  	
-	  	<button type="button" onclick="sendData()" class="btn btn-dark" style="margin:10px"> connecter </button>
-	  
   </div>
   <!-- Main layout END-->
   

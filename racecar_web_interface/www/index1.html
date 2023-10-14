@@ -33,33 +33,33 @@ Client-side:
 <body>
     
   <!-- Menu BEGIN-->
-  <nav class="navbar navbar-dark bg-dark">
-    <div class="row">
-        <div class="col-md-6">
-            <h3 style="color: white; padding-left: 20px;">Racecar</h3>
-        </div>
-        <div class="col-md-6">
-                <button type="button" class="btn btn-light float-right" onclick="ReturnHome()">Deconnexion!</button>
-        </div>
-    </div>
+  <nav class="navbar navbar-dark bg-dark container-fluid">
+            <div class="col-md-3">
+                <h1 style="color: white;">Racecar</h1>
+            </div>
+            <div class="col-md-2 d-flex justify-content-end">
+                    <button type="button" class="btn btn-light float-right" onclick="ReturnHome()">Deconnexion!</button>
+            </div>
    </nav>
   <!-- Menu END-->
 
   <!-- Main layout BEGIN-->
   <div class="container-fluid">
     <div class="row">
-        <div>
+        <div class="col-md-6">
             <div>
                 <div class="row">
                     <h4 style="padding-left:15px">Statut</h4> 
                     <div id="colorStatut"class="box red" style="margin-top:4px;margin-left:5px"></div>
                 </div>
-                <table>
-                    <tr>
-                        <td><textarea id="output" rows="3" cols="35"></textarea></td>
-                        <td><button type="button" class="btn btn-dark" onclick="EffacezCb()">Effacer</button></td>
-                    </tr>
-                </table>
+                 <div class="row">
+                    <div>
+                       <textarea id="output" rows="3" cols="35" style="margin-left:10px" disabled></textarea>
+                    </div>
+                     <div>
+                       <button style="margin-left:10px" type="button" class="btn btn-dark" onclick="EffacezCb()">Effacer</button>
+                     </div>
+                </div>
                         
                         
             
@@ -68,29 +68,32 @@ Client-side:
                 <table border="0">
                     <tr>
                         <td></td>
-                        <td><button type="button" id="btnAvancez" class="btn btn-dark" onclick="AvancezCb()" disabled>Avancer</button></td>
+                        <td><button type="button" id="btnAvancez" class="btn btn-dark" onclick="AvancezCb()" style="font-size:25px" disabled>&#8593</button></td>
                         <td></td>
                     </tr>
                     <tr>
-                        <td><button type="button" id="btnGauche" class="btn btn-dark" onclick="GaucheCb()" disabled>Gauche</button></td>
-                        <td><button type="button" id="btnArretez" class="btn btn-danger" onclick="ArretezCb()" disabled> Arreter </button></td>
-                        <td><button type="button" id="btnDroite" class="btn btn-dark" onclick="DroiteCb()" disabled> Droite </button></td>
+                        <td><button type="button" id="btnGauche" class="btn btn-dark" onclick="GaucheCb()" style="font-size:25px" disabled>&#8598</button></td>
+                        <td><button type="button" id="btnArretez" class="btn btn-danger" onclick="ArretezCb()" style="font-size:25px" disabled> Arrêt! </button></td>
+                        <td><button type="button" id="btnDroite" class="btn btn-dark" onclick="DroiteCb()" style="font-size:25px" v disabled> &#8599 </button></td>
                     </tr>
                     <tr>
                         <td></td>
-                        <td><button type="button" id="btnArriere" class="btn btn-dark" onclick="ArriereCb()" disabled> Reculer </button></td>
+                        <td><button type="button" id="btnArriere" class="btn btn-dark" onclick="ArriereCb()" style="font-size:25px" disabled> &#8595 </button></td>
                         <td></td>
                     </tr>
                 
                 </table>
                 <h4>Informations de connexion</h4>
                 <p>Nom d'usager</p>
-                <textarea id="Username" rows="1" cols="25"></textarea><br>
+                <input class="form-control" type="text" id="Username" placeholder="Nom utilisateur" style="max-width:320px" disabled><br>
                 <p>Adresse IP</p>
-                <textarea id="IP_Display" rows="1" cols="25"></textarea><br>
+                <input class="form-control" type="text" id="IP_Display" placeholder="adresse ip" style="max-width:320px" disabled><br>
+                <div>
+                    
+                </div>
             </div>
         </div>
-        <div >
+        <div class="col-md-6">
             <h4>Caméra</h4>
             <img id="vid" src="http://:8080/stream?topic=/racecar/raspicam_node/image&type=ros_compressed" class="img-thumbnail" alt="Le flux video de la camera est non disponible" width="480" height="auto">
         </div>
@@ -104,7 +107,6 @@ Client-side:
   <script src="js/popper.min.js"></script>
   <script src="js/bootstrap.min.js"></script>
   <script src="js/roslib.min.js"></script> <!-- rosbridge -->
-
   <!-- Custom scripts -->
   <script>
       // Define some global variables
@@ -113,6 +115,7 @@ Client-side:
       var urlParams = new URLSearchParams(window.location.search);
       var username = urlParams.get("username");
       var ip = urlParams.get("ip");
+      var keyHeld = false;
 
       // Display the received data on the page
       var usertext = document.getElementById("Username");
@@ -255,6 +258,44 @@ Client-side:
             // Navigate to the target page with the data
             window.location.href = targetURL;
        }
+       
+       document.addEventListener("keydown", function (event) {
+       
+        if (keyHeld) return;
+        
+        keyHeld = true;
+        
+            switch (event.key) {
+                case "ArrowUp":
+                    simulateButtonClick(0, 1); // Click the Up-Left arrow
+                    break;
+                case "ArrowLeft":
+                    simulateButtonClick(1, 0); // Click the Left arrow
+                    break;
+                case "ArrowRight":
+                    simulateButtonClick(1, 2); // Click the Right arrow
+                    break;
+                case "ArrowDown":
+                    simulateButtonClick(2, 1); // Click the Down-Left arrow
+                    break;
+                case " ":
+                    simulateButtonClick(1,1); //Space bar to stop
+                    break;
+            }
+        });
+        
+        
+        document.addEventListener("keyup", function (event) {
+            keyHeld = false;
+        });
+
+        function simulateButtonClick(row, col) {
+            var cell = document.querySelectorAll("table tr")[row].querySelectorAll("td")[col];
+            var button = cell.querySelector("button");
+            if (button) {
+                button.click();
+            }
+        }
 
   </script>
 </body>
