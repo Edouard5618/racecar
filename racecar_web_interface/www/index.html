@@ -31,6 +31,32 @@ Client-side:
   	max-width:100%;
   	height: auto;
 	}
+	
+    .container {
+    		 padding: 32px;
+    		 /*position: absolute;
+    		 top: 50%;
+   		 transform: translateY(-50%);
+		 left: 50%;
+		 transform: translateX(-50%);*/
+    		}
+    		
+    .bouton {
+             background-color: #33A748;
+             color: white;
+             padding: 10px 10px;
+             border-radius: 8px;
+             }
+             
+    .zoneTexte {
+    		width: 100%;
+    		box-sizing: border-box;
+    		padding: 15px 20px;
+    		margin: 8px 0;
+    		display: inline-block;
+    		border: 1px solid #ccc;
+    		}
+             
     </style>
 </head>
 
@@ -39,7 +65,7 @@ Client-side:
   <!-- Menu BEGIN-->
   <nav class="navbar navbar-dark bg-dark">
 	      <h1 style="color:white; padding-left: 15px">
-	      	RaceCar
+	      	Connexion RaceCar
 	      </h1>
       </div>
     </div>
@@ -47,14 +73,13 @@ Client-side:
   <!-- Menu END-->
 
   <!-- Main layout BEGIN-->
-  <div class="container-fluid align-items-center justify-content-center">
-  		<div class=" d-flex align-items-center justify-content-center">
+  <div class="container">
 		  	
-		  		<input class="form-control" type="text" id="Username" placeholder="Nom utilisateur">
-		  		<input class="form-control" type="text" id="IP" placeholder="Adresse IP">
-		  	<button type="button" onclick="sendData()" class="btn btn-dark" style="margin:10px"> connecter </button>
+		  <label for="uname"><b>Identifiant</b></label>
+		  <input class="zoneTexte" type="text" id="Username" placeholder="Nom utilisateur" required>
+		  <input class="zoneTexte" type="text" id="IP" placeholder="Adresse IP" required>
+		 <button type="button" onclick="sendData()" class="bouton" style="margin:10px 0"> Me connecter </button>
 		  	
-	  	</div>
   </div>
   <!-- Main layout END-->
   
