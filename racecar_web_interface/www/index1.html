@@ -38,7 +38,7 @@ Client-side:
                 <h1 style="color: white;">Racecar</h1>
             </div>
             <div class="col-md-2 d-flex justify-content-end">
-                    <button type="button" class="btn btn-light float-right" onclick="ReturnHome()">Deconnexion!</button>
+                    <button type="button" class="btn btn-light float-right" onclick="ReturnHome()">Déconnexion!</button>
             </div>
    </nav>
   <!-- Menu END-->
@@ -46,10 +46,14 @@ Client-side:
   <!-- Main layout BEGIN-->
   <div class="container-fluid">
     <div class="row">
+    <div class="col-md-6 order-md-1">
+            <h4>Caméra</h4>
+            <img id="vid" src="http://:8080/stream?topic=/racecar/raspicam_node/image&type=ros_compressed" class="img-thumbnail" alt="Le flux video de la camera est non disponible" width="480" height="auto">
+        </div>
         <div class="col-md-6">
             <div>
                 <div class="row">
-                    <h4 style="padding-left:15px">Statut</h4> 
+                    <h4 style="padding-left:15px">Statut de connexion: </h4> 
                     <div id="colorStatut"class="box red" style="margin-top:4px;margin-left:5px"></div>
                 </div>
                  <div class="row">
@@ -93,10 +97,7 @@ Client-side:
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <h4>Caméra</h4>
-            <img id="vid" src="http://:8080/stream?topic=/racecar/raspicam_node/image&type=ros_compressed" class="img-thumbnail" alt="Le flux video de la camera est non disponible" width="480" height="auto">
-        </div>
+        
      </div>
   </div>
   <!-- Main layout END-->
